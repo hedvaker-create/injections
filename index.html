@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ההזרקות שלי">
+<meta name="theme-color" content="#F6F4EF">
+<title>ההזרקות שלי</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#F6F4EF; --surface:#FFFFFF; --primary:#3F5D5B; --soft:#E4ECEA;
+    --accent:#B8674F; --success:#6E8F6A; --text:#2A2E2C; --muted:#7B8580; --line:#F0EEE8;
+    --c-inj:#3F5D5B; --c-weight:#4A83A6; --c-act:#8A5A9E;
+  }
+  body {
+    background: var(--bg); color: var(--text); font-size: 17px;
+    font-family: 'Segoe UI','Arial Hebrew',Tahoma,sans-serif;
+    padding: 16px; -webkit-tap-highlight-color: transparent;
+  }
+  .container { max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  header { display: flex; align-items: flex-start; justify-content: space-between; padding-top: 8px; }
+  .eyebrow { font-size: 15px; color: var(--muted); font-weight: 600; letter-spacing: .5px; }
+  h1 { font-size: 32px; font-weight: 700; margin-top: 2px; }
+  .icon-btn { background: var(--surface); border: 1px solid var(--soft); border-radius: 12px;
+    width: 48px; height: 48px; font-size: 22px; color: var(--primary); }
+  .card { background: var(--surface); border-radius: 16px; padding: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.04); display: flex; flex-direction: column; gap: 12px; }
+  .status { border-right: 5px solid var(--primary); padding: 20px; }
+  .status.overdue { border-right-color: var(--accent); }
+  .status-top { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--primary); }
+  .overdue .dot { background: var(--accent); }
+  .status-text { font-size: 23px; font-weight: 700; }
+  .status-sub { font-size: 17px; color: var(--muted); margin-top: 6px; }
+  .last-info { font-size: 16px; color: var(--muted); margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .section-label { font-size: 18px; font-weight: 700; color: var(--primary); }
+  label.field-label { font-size: 15px; color: var(--muted); font-weight: 600; margin-bottom: -4px; }
+  input, select { padding: 14px 16px; border-radius: 12px; border: 1px solid var(--soft);
+    background: var(--surface); font-size: 17px; color: var(--text); width: 100%; font-family: inherit; }
+  select { -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237B8580' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat; background-position: left 16px center; padding-left: 42px; }
+  input:focus-visible, select:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+  .primary-btn { background: var(--primary); color: #fff; border: none; border-radius: 12px;
+    padding: 16px 0; font-size: 19px; font-weight: 700; font-family: inherit; }
+  .settings { background: var(--surface); border: 1px solid var(--soft); border-radius: 14px; padding: 16px; }
+  .settings-label { font-size: 16px; color: var(--muted); font-weight: 600; }
+  .pills { display: flex; gap: 8px; margin-top: 10px; }
+  .pill { flex: 1; padding: 12px 0; border-radius: 999px; border: 1px solid var(--soft);
+    background: var(--bg); color: var(--text); font-size: 17px; font-family: inherit; }
+  .pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .hist { background: var(--surface); border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.04); overflow: hidden; }
+  .hist-toggle { width: 100%; background: none; border: none; padding: 16px 18px;
+    display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 700; color: var(--text); font-family: inherit; }
+  .chev { transition: transform .2s; }
+  .chev.open { transform: rotate(180deg); }
+  .hist-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-top: 1px solid var(--line); gap: 8px; }
+  .hist-date { font-size: 17px; font-weight: 600; }
+  .hist-detail { font-size: 16px; color: var(--muted); margin-top: 3px; }
+  /* per-section theme colors */
+  .theme-inj { border-right: 5px solid var(--c-inj); }
+  .theme-weight { border-right: 5px solid var(--c-weight); }
+  .theme-act { border-right: 5px solid var(--c-act); }
+  .theme-inj .section-label { color: var(--c-inj); }
+  .theme-weight .section-label { color: var(--c-weight); }
+  .theme-act .section-label { color: var(--c-act); }
+  .hist.theme-inj .hist-toggle { box-shadow: inset 5px 0 0 var(--c-inj); }
+  .hist.theme-weight .hist-toggle { box-shadow: inset 5px 0 0 var(--c-weight); }
+  .hist.theme-act .hist-toggle { box-shadow: inset 5px 0 0 var(--c-act); }
+  .hist-actions { display: flex; gap: 2px; flex-shrink: 0; }
+  .act-btn { background: none; border: none; font-size: 17px; padding: 8px; }
+  .edit { color: var(--primary); }
+  .del { color: var(--accent); }
+  .empty { padding: 18px; font-size: 16px; color: var(--muted); text-align: center; }
+  .weight-summary { display: flex; align-items: baseline; gap: 12px; }
+  .weight-value { font-size: 28px; font-weight: 700; }
+  .weight-date { font-size: 15px; color: var(--muted); }
+  .weight-delta { font-size: 17px; font-weight: 600; margin-right: auto; }
+  .hidden { display: none; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--text); color: #fff; padding: 12px 22px; border-radius: 999px; font-size: 16px; opacity: 0; transition: opacity .2s; z-index: 50; }
+  .toast.show { opacity: 1; }
+  button { cursor: pointer; }
+  /* modal */
+  .overlay { position: fixed; inset: 0; background: rgba(42,46,44,.45); display: flex;
+    align-items: center; justify-content: center; padding: 24px; z-index: 100; }
+  .modal { background: var(--surface); border-radius: 18px; padding: 22px; width: 100%; max-width: 360px;
+    display: flex; flex-direction: column; gap: 14px; box-shadow: 0 10px 40px rgba(0,0,0,.2); }
+  .modal-title { font-size: 20px; font-weight: 700; }
+  .modal-text { font-size: 16px; color: var(--muted); }
+  .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+  .modal-actions button { flex: 1; padding: 14px 0; border-radius: 12px; font-size: 17px; font-weight: 700; font-family: inherit; border: none; }
+  .btn-cancel { background: var(--bg); color: var(--text); border: 1px solid var(--soft) !important; }
+  .btn-danger { background: var(--accent); color: #fff; }
+  .btn-save { background: var(--primary); color: #fff; }
+  .theme-inj .primary-btn { background: var(--c-inj); }
+  .theme-weight .primary-btn { background: var(--c-weight); }
+  .theme-act .primary-btn { background: var(--c-act); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <div class="eyebrow">מעקב טיפול שבועי</div>
+      <h1>ההזרקות שלי</h1>
+    </div>
+    <button class="icon-btn" id="settingsBtn" aria-label="הגדרות">⚙︎</button>
+  </header>
+
+  <div class="settings hidden" id="settingsPanel">
+    <div class="settings-label">מרווח בין הזרקות (בימים)</div>
+    <div class="pills" id="intervalPills"></div>
+  </div>
+
+  <section class="card status" id="statusCard">
+    <div class="status-top"><span class="dot"></span><span class="status-text" id="dueLabel"></span></div>
+    <div class="status-sub" id="dueSub"></div>
+    <div class="last-info hidden" id="lastInfo"></div>
+  </section>
+
+  <section class="card theme-inj">
+    <div class="section-label">רישום הזרקה</div>
+    <input type="number" inputmode="decimal" id="doseInput" placeholder="מינון (מ״ג)">
+    <input type="text" id="noteInput" placeholder="הערה (לא חובה)">
+    <button class="primary-btn" id="logInjectionBtn">סמני כבוצע היום</button>
+  </section>
+
+  <section class="hist theme-inj">
+    <button class="hist-toggle" id="histToggle"><span id="histTitle">היסטוריית הזרקות (0)</span><span class="chev" id="histChev">⌄</span></button>
+    <div class="hidden" id="histList"></div>
+  </section>
+
+  <section class="card theme-weight">
+    <div class="section-label">דיווח משקל</div>
+    <div class="weight-summary hidden" id="weightSummary"></div>
+    <div class="row">
+      <input type="number" inputmode="decimal" id="weightInput" placeholder="משקל (ק״ג)">
+      <input type="date" id="weightDate">
+    </div>
+    <button class="primary-btn" id="logWeightBtn">רישום משקל</button>
+  </section>
+
+  <section class="hist theme-weight">
+    <button class="hist-toggle" id="wHistToggle"><span id="wHistTitle">היסטוריית משקל (0)</span><span class="chev" id="wHistChev">⌄</span></button>
+    <div class="hidden" id="wHistList"></div>
+  </section>
+
+  <section class="card theme-act">
+    <div class="section-label">פעילות גופנית</div>
+    <select id="actType"></select>
+    <div class="row">
+      <input type="number" inputmode="numeric" id="actDuration" placeholder="משך (דקות)">
+      <input type="date" id="actDate">
+    </div>
+    <button class="primary-btn" id="logActBtn">רישום פעילות</button>
+  </section>
+
+  <section class="hist theme-act">
+    <button class="hist-toggle" id="aHistToggle"><span id="aHistTitle">היסטוריית פעילות (0)</span><span class="chev" id="aHistChev">⌄</span></button>
+    <div class="hidden" id="aHistList"></div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="modalRoot"></div>
+
+<script>
+const LOG_KEY="injection-log", WEIGHT_KEY="weight-log", ACT_KEY="activity-log", SET_KEY="injection-settings", DEFAULT_INTERVAL=7;
+const ACTIVITY_TYPES=["הליכה","ריצה","אופניים","שחייה","אימון כוח","יוגה / פילאטיס","אחר"];
+
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f;}catch(e){return f;}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
+
+let log=load(LOG_KEY,[]), weightLog=load(WEIGHT_KEY,[]), actLog=load(ACT_KEY,[]);
+let interval_=load(SET_KEY,{intervalDays:DEFAULT_INTERVAL}).intervalDays||DEFAULT_INTERVAL;
+let histOpen=false, wHistOpen=false, aHistOpen=false, settingsOpen=false;
+
+const fmt=d=>new Date(d).toLocaleDateString("he-IL",{day:"2-digit",month:"2-digit",year:"numeric"});
+const todayStr=()=>new Date().toISOString().slice(0,10);
+const daysBetween=(a,b)=>Math.round((new Date(b).setHours(0,0,0,0)-new Date(a).setHours(0,0,0,0))/86400000);
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200);}
+
+/* ---------- generic modals ---------- */
+function closeModal(){$("modalRoot").innerHTML="";}
+function confirmDelete(onYes){
+  $("modalRoot").innerHTML=`
+    <div class="overlay" id="ov">
+      <div class="modal">
+        <div class="modal-title">מחיקת רשומה</div>
+        <div class="modal-text">האם את בטוחה שברצונך למחוק את הרשומה? לא ניתן לשחזר.</div>
+        <div class="modal-actions">
+          <button class="btn-cancel" id="mCancel">ביטול</button>
+          <button class="btn-danger" id="mYes">מחיקה</button>
+        </div>
+      </div>
+    </div>`;
+  $("mCancel").onclick=closeModal;
+  $("ov").onclick=e=>{if(e.target.id==="ov")closeModal();};
+  $("mYes").onclick=()=>{onYes();closeModal();};
+}
+
+/* ---------- injections ---------- */
+function renderStatus(){
+  const sorted=[...log].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const last=sorted[0];
+  const card=$("statusCard");
+  if(!last){
+    card.classList.remove("overdue");
+    $("dueLabel").textContent="אין עדיין הזרקות רשומות";
+    $("dueSub").textContent="תעדי את ההזרקה הראשונה כדי להתחיל מעקב";
+    $("lastInfo").classList.add("hidden");
+    return;
+  }
+  const nextDue=new Date(last.date); nextDue.setDate(nextDue.getDate()+interval_);
+  const daysLeft=daysBetween(todayStr(),nextDue.toISOString().slice(0,10));
+  const overdue=daysLeft<0;
+  card.classList.toggle("overdue",overdue);
+  $("dueLabel").textContent = daysLeft===0?"ההזרקה מגיעה היום":overdue?`באיחור של ${Math.abs(daysLeft)} ימים`:`בעוד ${daysLeft} ימים`;
+  $("dueSub").textContent=`ההזרקה הבאה מתוכננת ל-${fmt(nextDue)}`;
+  $("lastInfo").classList.remove("hidden");
+  $("lastInfo").textContent=`הזרקה אחרונה: ${fmt(last.date)}${last.dose?` · ${last.dose} מ״ג`:""}`;
+}
+
+function editInjection(id){
+  const e=log.find(x=>x.id===id); if(!e)return;
+  $("modalRoot").innerHTML=`
+    <div class="overlay" id="ov">
+      <div class="modal">
+        <div class="modal-title">עריכת הזרקה</div>
+        <label class="field-label">תאריך</label>
+        <input type="date" id="eDate" value="${e.date}">
+        <label class="field-label">מינון (מ״ג)</label>
+        <input type="number" inputmode="decimal" id="eDose" value="${esc(e.dose)}" placeholder="מינון (מ״ג)">
+        <label class="field-label">הערה</label>
+        <input type="text" id="eNote" value="${esc(e.note)}" placeholder="הערה">
+        <div class="modal-actions">
+          <button class="btn-cancel" id="mCancel">ביטול</button>
+          <button class="btn-save" id="mSave">שמירה</button>
+        </div>
+      </div>
+    </div>`;
+  $("mCancel").onclick=closeModal;
+  $("ov").onclick=ev=>{if(ev.target.id==="ov")closeModal();};
+  $("mSave").onclick=()=>{
+    e.date=$("eDate").value||e.date;
+    e.dose=$("eDose").value.trim();
+    e.note=$("eNote").value.trim();
+    save(LOG_KEY,log); closeModal(); renderStatus(); renderInjHist(); toast("הרשומה עודכנה");
+  };
+}
+
+function renderInjHist(){
+  const sorted=[...log].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  $("histTitle").textContent=`היסטוריית הזרקות (${log.length})`;
+  const list=$("histList");
+  list.classList.toggle("hidden",!histOpen);
+  $("histChev").classList.toggle("open",histOpen);
+  if(!histOpen)return;
+  if(sorted.length===0){list.innerHTML='<div class="empty">עדיין אין רשומות. ההיסטוריה תופיע כאן.</div>';return;}
+  list.innerHTML=sorted.map(e=>{
+    const detail=[e.dose?`${esc(e.dose)} מ״ג`:"",esc(e.note||"")].filter(Boolean).join(" · ");
+    return `<div class="hist-item"><div><div class="hist-date">${fmt(e.date)}</div><div class="hist-detail">${detail}</div></div>
+      <div class="hist-actions">
+        <button class="act-btn edit" data-edit-inj="${e.id}" aria-label="עריכה">✎</button>
+        <button class="act-btn del" data-del-inj="${e.id}" aria-label="מחיקה">✕</button>
+      </div></div>`;
+  }).join("");
+}
+
+/* ---------- weight ---------- */
+function editWeight(id){
+  const e=weightLog.find(x=>x.id===id); if(!e)return;
+  $("modalRoot").innerHTML=`
+    <div class="overlay" id="ov">
+      <div class="modal">
+        <div class="modal-title">עריכת משקל</div>
+        <label class="field-label">תאריך</label>
+        <input type="date" id="eDate" value="${e.date}">
+        <label class="field-label">משקל (ק״ג)</label>
+        <input type="number" inputmode="decimal" id="eW" value="${e.weight}" placeholder="משקל (ק״ג)">
+        <div class="modal-actions">
+          <button class="btn-cancel" id="mCancel">ביטול</button>
+          <button class="btn-save" id="mSave">שמירה</button>
+        </div>
+      </div>
+    </div>`;
+  $("mCancel").onclick=closeModal;
+  $("ov").onclick=ev=>{if(ev.target.id==="ov")closeModal();};
+  $("mSave").onclick=()=>{
+    const kg=parseFloat($("eW").value);
+    if(isNaN(kg)){toast("יש להזין משקל תקין");return;}
+    e.date=$("eDate").value||e.date; e.weight=kg;
+    save(WEIGHT_KEY,weightLog); closeModal(); renderWeight(); toast("הרשומה עודכנה");
+  };
+}
+
+function renderWeight(){
+  const sorted=[...weightLog].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const last=sorted[0], prev=sorted[1];
+  const sum=$("weightSummary");
+  if(last){
+    sum.classList.remove("hidden");
+    let delta="";
+    if(prev){
+      const d=last.weight-prev.weight;
+      const c=d>0?"#B8674F":d<0?"#6E8F6A":"#7B8580";
+      delta=`<span class="weight-delta" style="color:${c}">${d>0?"+":""}${d.toFixed(1)} ק״ג</span>`;
+    }
+    sum.innerHTML=`<span class="weight-value">${last.weight} ק״ג</span><span class="weight-date">${fmt(last.date)}</span>${delta}`;
+  } else sum.classList.add("hidden");
+
+  $("wHistTitle").textContent=`היסטוריית משקל (${weightLog.length})`;
+  const list=$("wHistList");
+  list.classList.toggle("hidden",!wHistOpen);
+  $("wHistChev").classList.toggle("open",wHistOpen);
+  if(!wHistOpen)return;
+  if(sorted.length===0){list.innerHTML='<div class="empty">עדיין אין רשומות משקל. ההיסטוריה תופיע כאן.</div>';return;}
+  list.innerHTML=sorted.map(e=>`<div class="hist-item"><div><div class="hist-date">${fmt(e.date)}</div><div class="hist-detail">${e.weight} ק״ג</div></div>
+    <div class="hist-actions">
+      <button class="act-btn edit" data-edit-w="${e.id}" aria-label="עריכה">✎</button>
+      <button class="act-btn del" data-del-w="${e.id}" aria-label="מחיקה">✕</button>
+    </div></div>`).join("");
+}
+
+/* ---------- activity ---------- */
+function editActivity(id){
+  const e=actLog.find(x=>x.id===id); if(!e)return;
+  const opts=ACTIVITY_TYPES.map(t=>`<option value="${esc(t)}"${t===e.type?" selected":""}>${esc(t)}</option>`).join("");
+  $("modalRoot").innerHTML=`
+    <div class="overlay" id="ov">
+      <div class="modal">
+        <div class="modal-title">עריכת פעילות</div>
+        <label class="field-label">תאריך</label>
+        <input type="date" id="eDate" value="${e.date}">
+        <label class="field-label">סוג פעילות</label>
+        <select id="eType">${opts}</select>
+        <label class="field-label">משך (דקות)</label>
+        <input type="number" inputmode="numeric" id="eDur" value="${e.duration}" placeholder="משך (דקות)">
+        <div class="modal-actions">
+          <button class="btn-cancel" id="mCancel">ביטול</button>
+          <button class="btn-save" id="mSave">שמירה</button>
+        </div>
+      </div>
+    </div>`;
+  $("mCancel").onclick=closeModal;
+  $("ov").onclick=ev=>{if(ev.target.id==="ov")closeModal();};
+  $("mSave").onclick=()=>{
+    const dur=parseInt($("eDur").value,10);
+    if(isNaN(dur)){toast("יש להזין משך תקין");return;}
+    e.date=$("eDate").value||e.date; e.type=$("eType").value; e.duration=dur;
+    save(ACT_KEY,actLog); closeModal(); renderActivity(); toast("הרשומה עודכנה");
+  };
+}
+
+function renderActivity(){
+  const sorted=[...actLog].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  $("aHistTitle").textContent=`היסטוריית פעילות (${actLog.length})`;
+  const list=$("aHistList");
+  list.classList.toggle("hidden",!aHistOpen);
+  $("aHistChev").classList.toggle("open",aHistOpen);
+  if(!aHistOpen)return;
+  if(sorted.length===0){list.innerHTML='<div class="empty">עדיין אין רשומות פעילות. ההיסטוריה תופיע כאן.</div>';return;}
+  list.innerHTML=sorted.map(e=>{
+    return `<div class="hist-item"><div><div class="hist-date">${fmt(e.date)}</div>
+      <div class="hist-detail">${esc(e.type)} · ${e.duration} דק׳</div></div>
+      <div class="hist-actions">
+        <button class="act-btn edit" data-edit-a="${e.id}" aria-label="עריכה">✎</button>
+        <button class="act-btn del" data-del-a="${e.id}" aria-label="מחיקה">✕</button>
+      </div></div>`;
+  }).join("");
+}
+
+function renderIntervals(){
+  $("intervalPills").innerHTML=[7,14,28].map(d=>`<button class="pill${interval_===d?" active":""}" data-iv="${d}">${d} ימים</button>`).join("");
+}
+function fillActivityTypes(){
+  $("actType").innerHTML=ACTIVITY_TYPES.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join("");
+}
+
+function renderAll(){renderStatus();renderInjHist();renderWeight();renderActivity();}
+
+/* ---------- events ---------- */
+$("settingsBtn").onclick=()=>{settingsOpen=!settingsOpen;$("settingsPanel").classList.toggle("hidden",!settingsOpen);};
+$("histToggle").onclick=()=>{histOpen=!histOpen;renderInjHist();};
+$("wHistToggle").onclick=()=>{wHistOpen=!wHistOpen;renderWeight();};
+$("aHistToggle").onclick=()=>{aHistOpen=!aHistOpen;renderActivity();};
+
+$("logInjectionBtn").onclick=()=>{
+  const dose=$("doseInput").value.trim(), note=$("noteInput").value.trim();
+  log.push({id:String(Date.now()),date:todayStr(),dose,note});
+  save(LOG_KEY,log);
+  $("doseInput").value="";$("noteInput").value="";
+  renderStatus();renderInjHist();toast("ההזרקה נרשמה בהצלחה");
+};
+
+$("logWeightBtn").onclick=()=>{
+  const raw=$("weightInput").value.trim(), kg=parseFloat(raw);
+  if(!raw||isNaN(kg)){toast("יש להזין משקל תקין בק״ג");return;}
+  const date=$("weightDate").value||todayStr();
+  weightLog.push({id:String(Date.now()),date,weight:kg});
+  save(WEIGHT_KEY,weightLog);
+  $("weightInput").value="";
+  renderWeight();toast("המשקל נרשם בהצלחה");
+};
+
+$("logActBtn").onclick=()=>{
+  const type=$("actType").value;
+  const raw=$("actDuration").value.trim(), dur=parseInt(raw,10);
+  if(!raw||isNaN(dur)){toast("יש להזין משך בדקות");return;}
+  const date=$("actDate").value||todayStr();
+  actLog.push({id:String(Date.now()),date,type,duration:dur});
+  save(ACT_KEY,actLog);
+  $("actDuration").value="";
+  renderActivity();toast("הפעילות נרשמה בהצלחה");
+};
+
+document.addEventListener("click",e=>{
+  const t=e.target; if(!t.getAttribute)return;
+  const iv=t.getAttribute("data-iv");
+  if(iv){interval_=+iv;save(SET_KEY,{intervalDays:interval_});renderIntervals();renderStatus();return;}
+
+  const di=t.getAttribute("data-del-inj");
+  if(di){confirmDelete(()=>{log=log.filter(x=>x.id!==di);save(LOG_KEY,log);renderStatus();renderInjHist();toast("הרשומה נמחקה");});return;}
+  const ei=t.getAttribute("data-edit-inj");
+  if(ei){editInjection(ei);return;}
+
+  const dw=t.getAttribute("data-del-w");
+  if(dw){confirmDelete(()=>{weightLog=weightLog.filter(x=>x.id!==dw);save(WEIGHT_KEY,weightLog);renderWeight();toast("הרשומה נמחקה");});return;}
+  const ew=t.getAttribute("data-edit-w");
+  if(ew){editWeight(ew);return;}
+
+  const da=t.getAttribute("data-del-a");
+  if(da){confirmDelete(()=>{actLog=actLog.filter(x=>x.id!==da);save(ACT_KEY,actLog);renderActivity();toast("הרשומה נמחקה");});return;}
+  const ea=t.getAttribute("data-edit-a");
+  if(ea){editActivity(ea);return;}
+});
+
+/* init */
+$("weightDate").value=todayStr();
+$("actDate").value=todayStr();
+fillActivityTypes();
+renderIntervals();renderAll();
+</script>
+</body>
+</html>
